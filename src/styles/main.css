@@ -121,31 +121,91 @@ body {
     min-height: 100px;
 }
 
-/* 時間スロット */
-.time-slots {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+/* 日付と時間の選択 */
+.date-time-selector {
     margin-top: 10px;
 }
 
-.time-slot {
-    padding: 10px;
+.date-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 15px;
     background: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.date-input {
+    width: auto;
+}
+
+.date-input-container input[type="time"] {
+    width: auto;
+}
+
+.date-input-container span {
+    margin: 0 5px;
+}
+
+.btn-add-date {
+    background: #34a853;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add-date:hover {
+    background: #2d8e47;
+}
+
+/* 選択された日付 */
+.selected-dates {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.no-dates {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+.selected-date-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #e8f0fe;
     border-radius: 5px;
 }
 
-.time-slot input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
+.date-text {
+    font-weight: 500;
 }
 
-.time-slot input[type="time"] {
-    width: auto;
+.btn-remove-date {
+    background: #ea4335;
+    color: white;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
-.time-slot span {
-    margin: 0 5px;
+.btn-remove-date:hover {
+    background: #d33b2c;
 }
 
 /* ボタン */

@@ -71,47 +71,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label>利用可能な曜日と時間帯 *</label>
-                    <div class="time-slots">
-                        <div class="time-slot">
-                            <label>
-                                <input type="checkbox" name="days" value="1" checked> 月曜日
-                            </label>
-                            <input type="time" name="startTime1" value="09:00">
+                    <label>利用可能な日付と時間帯 *</label>
+                    <div class="date-time-selector">
+                        <div class="date-input-container">
+                            <input type="date" id="dateInput" class="date-input">
+                            <input type="time" id="startTimeInput" value="09:00">
                             <span>〜</span>
-                            <input type="time" name="endTime1" value="17:00">
+                            <input type="time" id="endTimeInput" value="17:00">
+                            <button type="button" class="btn-add-date" onclick="addDateTime()">
+                                日程を追加
+                            </button>
                         </div>
-                        <div class="time-slot">
-                            <label>
-                                <input type="checkbox" name="days" value="2" checked> 火曜日
-                            </label>
-                            <input type="time" name="startTime2" value="09:00">
-                            <span>〜</span>
-                            <input type="time" name="endTime2" value="17:00">
-                        </div>
-                        <div class="time-slot">
-                            <label>
-                                <input type="checkbox" name="days" value="3" checked> 水曜日
-                            </label>
-                            <input type="time" name="startTime3" value="09:00">
-                            <span>〜</span>
-                            <input type="time" name="endTime3" value="17:00">
-                        </div>
-                        <div class="time-slot">
-                            <label>
-                                <input type="checkbox" name="days" value="4" checked> 木曜日
-                            </label>
-                            <input type="time" name="startTime4" value="09:00">
-                            <span>〜</span>
-                            <input type="time" name="endTime4" value="17:00">
-                        </div>
-                        <div class="time-slot">
-                            <label>
-                                <input type="checkbox" name="days" value="5" checked> 金曜日
-                            </label>
-                            <input type="time" name="startTime5" value="09:00">
-                            <span>〜</span>
-                            <input type="time" name="endTime5" value="17:00">
+                        <div class="selected-dates" id="selectedDates">
+                            <!-- 選択された日付がここに表示される -->
                         </div>
                     </div>
                 </div>

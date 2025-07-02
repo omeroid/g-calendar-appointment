@@ -1,4 +1,4 @@
-import { initLocationSelector, generateLink, copyLink } from './admin.js';
+import { initLocationSelector, generateLink, copyLink, addDateTime, removeDateTime } from './admin.js';
 import { loadScheduleFromURL, createSchedule } from './user.js';
 import { getUrlParams } from './utils.js';
 
@@ -31,6 +31,8 @@ window.switchMode = switchMode;
 window.generateLink = generateLink;
 window.copyLink = copyLink;
 window.createSchedule = createSchedule;
+window.addDateTime = addDateTime;
+window.removeDateTime = removeDateTime;
 
 // ページ読み込み時の処理
 document.addEventListener('DOMContentLoaded', function() {

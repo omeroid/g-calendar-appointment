@@ -34,16 +34,27 @@ export function loadScheduleFromURL() {
 
 // スケジュール詳細を表示
 function displayScheduleDetails(scheduleData) {
-    const dayNames = APP_CONFIG.DAY_NAMES;
     const locationNames = APP_CONFIG.LOCATION_TYPES;
 
     const locationDisplay = scheduleData.location === 'custom' 
         ? (scheduleData.customLocation || 'カスタム')
         : locationNames[scheduleData.location];
 
-    const availabilityText = scheduleData.availability.map(a => 
-        `${dayNames[a.day]}曜日 ${a.startTime}〜${a.endTime}`
-    ).join('<br>');
+    let datesText = '';
+    if (scheduleData.availableDates) {
+        // 新しい形式（特定の日付）
+        datesText = scheduleData.availableDates.map(dt => {
+            const date = new Date(dt.date);
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]}) ${dt.startTime}〜${dt.endTime}`;
+        }).join('<br>');
+    } else if (scheduleData.availability) {
+        // 古い形式（曜日ベース）との互換性
+        const dayNames = APP_CONFIG.DAY_NAMES;
+        datesText = scheduleData.availability.map(a => 
+            `${dayNames[a.day]}曜日 ${a.startTime}〜${a.endTime}`
+        ).join('<br>');
+    }
 
     const contentHTML = `
         <div class="preview-item"><strong>タイトル:</strong> ${scheduleData.title}</div>
@@ -52,7 +63,7 @@ function displayScheduleDetails(scheduleData) {
         <div class="preview-item"><strong>場所:</strong> ${locationDisplay}</div>
         <div class="preview-item"><strong>バッファタイム:</strong> ${scheduleData.bufferTime}分</div>
         <div class="preview-item"><strong>予約可能期間:</strong> ${scheduleData.maxBookingTime}日後まで</div>
-        <div class="preview-item"><strong>利用可能時間:</strong><br>${availabilityText}</div>
+        <div class="preview-item"><strong>利用可能日時:</strong><br>${datesText}</div>
     `;
 
     document.getElementById('scheduleContent').innerHTML = contentHTML;
