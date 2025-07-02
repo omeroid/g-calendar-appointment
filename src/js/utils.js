@@ -28,6 +28,12 @@ export function showElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'block';
+        if (element.classList.contains('section')) {
+            element.classList.add('active');
+        }
+        console.log(`要素 ${elementId} を表示しました`);
+    } else {
+        console.error(`要素 ${elementId} が見つかりません`);
     }
 }
 
@@ -38,6 +44,9 @@ export function hideElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'none';
+        if (element.classList.contains('section')) {
+            element.classList.remove('active');
+        }
     }
 }
 

@@ -13,16 +13,10 @@ export function initLocationSelector() {
     const locationSelect = document.getElementById('location');
     const customLocationGroup = document.getElementById('customLocationGroup');
     
-    locationSelect.addEventListener('change', function() {
-        customLocationGroup.style.display = this.value === 'custom' ? 'block' : 'none';
-    });
-    
-    // 日付入力に今日の日付を設定
-    const dateInput = document.getElementById('dateInput');
-    if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        dateInput.min = today;
+    if (locationSelect && customLocationGroup) {
+        locationSelect.addEventListener('change', function() {
+            customLocationGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
     }
 }
 
@@ -99,6 +93,9 @@ function formatDate(dateStr) {
     const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
     return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]})`;
 }
+
+// グローバルに公開
+window.selectedDateTimes = selectedDateTimes;
 
 // リンク生成
 export function generateLink() {

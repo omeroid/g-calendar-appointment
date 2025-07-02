@@ -5,6 +5,14 @@ export const GOOGLE_CONFIG = {
     SCOPES: 'https://www.googleapis.com/auth/calendar'
 };
 
+// デバッグ情報
+if (!GOOGLE_CONFIG.CLIENT_ID) {
+    console.error('VITE_GOOGLE_CLIENT_ID が設定されていません。.envファイルを確認してください。');
+}
+if (!GOOGLE_CONFIG.API_KEY) {
+    console.error('VITE_GOOGLE_API_KEY が設定されていません。.envファイルを確認してください。');
+}
+
 // アプリケーション設定
 export const APP_CONFIG = {
     // 曜日の名前

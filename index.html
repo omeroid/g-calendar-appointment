@@ -3,45 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>予約スケジュール代理作成ツール</title>
+    <title>ミーティング予約枠作成ツール</title>
     <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>予約スケジュール代理作成ツール</h1>
-            <p>Google Calendar の予約スケジュールを代理で設定できます</p>
+            <h1>ミーティング予約枠作成ツール</h1>
+            <p>Google Calendar にミーティングの予約枠を簡単に作成できます</p>
+            <div id="userInfo" class="user-info"></div>
         </div>
 
-        <div class="mode-selector">
-            <button class="mode-btn active" onclick="switchMode('admin')">管理者モード（代理人用）</button>
-            <button class="mode-btn" onclick="switchMode('user')">実行モード（本人用）</button>
+        <!-- ログイン画面 -->
+        <div id="loginSection" class="section" style="display: none;">
+            <div style="text-align: center; padding: 60px 20px;">
+                <h2>ログインが必要です</h2>
+                <p style="margin: 20px 0;">このツールを使用するには、Googleアカウントでログインしてください。</p>
+                <button class="btn-primary" onclick="login()">
+                    Googleでログイン
+                </button>
+            </div>
         </div>
 
-        <!-- 管理者モード（代理人用） -->
-        <div id="adminMode" class="section active">
-            <h2>予約スケジュール設定</h2>
+
+        <!-- メインセクション -->
+        <div id="mainSection" class="section" style="display: none;">
+            <h2>ミーティング予約枠設定</h2>
             <form id="scheduleForm">
                 <div class="form-group">
-                    <label for="title">予約スケジュールのタイトル *</label>
-                    <input type="text" id="title" name="title" required placeholder="例: 個別相談会">
+                    <label for="title">ミーティングのタイトル *</label>
+                    <input type="text" id="title" name="title" required placeholder="例: 1on1ミーティング">
                 </div>
 
                 <div class="form-group">
                     <label for="description">説明</label>
-                    <textarea id="description" name="description" placeholder="予約スケジュールの説明を入力してください"></textarea>
+                    <textarea id="description" name="description" placeholder="ミーティングの説明を入力してください"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="duration">予約時間の長さ（分） *</label>
-                    <select id="duration" name="duration" required>
-                        <option value="15">15分</option>
-                        <option value="30" selected>30分</option>
-                        <option value="45">45分</option>
-                        <option value="60">60分</option>
-                        <option value="90">90分</option>
-                        <option value="120">120分</option>
-                    </select>
+                    <label>予約時間 *</label>
+                    <div class="duration-buttons">
+                        <button type="button" class="duration-btn" data-duration="30">30分</button>
+                        <button type="button" class="duration-btn active" data-duration="60">1時間</button>
+                        <button type="button" class="duration-btn" data-duration="120">2時間</button>
+                    </div>
+                    <input type="hidden" id="duration" name="duration" value="60" required>
                 </div>
 
                 <div class="form-group">
@@ -60,14 +66,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="bufferTime">バッファタイム（分）</label>
-                    <select id="bufferTime" name="bufferTime">
-                        <option value="0">なし</option>
-                        <option value="15">15分</option>
-                        <option value="30">30分</option>
-                        <option value="45">45分</option>
-                        <option value="60">60分</option>
-                    </select>
+                    <label>参加者 *</label>
+                    <div class="participants-container">
+                        <div class="participants-search">
+                            <input type="text" id="participantSearch" placeholder="名前またはメールアドレスで検索" autocomplete="off">
+                            <div id="searchResults" class="search-results" style="display: none;"></div>
+                        </div>
+                        <div class="selected-participants" id="selectedParticipants">
+                            <p class="no-participants">参加者が選択されていません</p>
+                        </div>
+                        <input type="hidden" id="participants" name="participants" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -88,70 +97,64 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="maxBookingTime">予約可能期間（日後まで）</label>
-                    <select id="maxBookingTime" name="maxBookingTime">
-                        <option value="7">1週間</option>
-                        <option value="14">2週間</option>
-                        <option value="30" selected>30日</option>
-                        <option value="60">60日</option>
-                        <option value="90">90日</option>
-                    </select>
-                </div>
 
-                <button type="button" class="btn-primary" onclick="generateLink()">
-                    共有リンクを生成
+                <button type="button" class="btn-primary" onclick="showConfirmation()">
+                    確認画面へ
                 </button>
             </form>
 
-            <div id="linkSection" style="display: none;">
-                <div class="generated-link">
-                    <strong>生成されたリンク:</strong>
-                    <div id="generatedLink"></div>
-                    <button class="copy-btn" onclick="copyLink()">リンクをコピー</button>
-                </div>
+        </div>
 
-                <div class="preview-section">
-                    <h3>設定内容のプレビュー</h3>
-                    <div id="previewContent"></div>
-                </div>
+        <!-- 確認画面 -->
+        <div id="confirmSection" class="section" style="display: none;">
+            <h2>予約内容の確認</h2>
+            <div class="preview-section">
+                <div id="confirmContent"></div>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+                <button type="button" class="btn-secondary" onclick="backToEdit()">
+                    戻る
+                </button>
+                <button type="button" class="btn-primary" onclick="createMeetings()">
+                    予約枠を作成
+                </button>
             </div>
         </div>
 
-        <!-- 実行モード（本人用） -->
-        <div id="userMode" class="section">
-            <h2>予約スケジュール作成確認</h2>
-            
-            <div id="scheduleDetails" style="display: none;">
-                <div class="preview-section">
-                    <h3>作成する予約スケジュールの内容</h3>
-                    <div id="scheduleContent"></div>
-                </div>
-
-                <div style="margin-top: 30px;">
-                    <p style="margin-bottom: 20px;">
-                        <strong>注意:</strong> 以下のボタンをクリックすると、Googleアカウントでログインし、
-                        上記の内容で予約スケジュールが作成されます。
-                    </p>
-                    <button class="btn-secondary" onclick="createSchedule()">
-                        Googleアカウントでログインして作成
-                    </button>
-                </div>
+        <!-- 作成済み予定一覧 -->
+        <div id="createdSection" class="section" style="display: none;">
+            <h2>作成された予約枠</h2>
+            <div class="created-meetings-list" id="createdMeetingsList">
+                <!-- 作成された予定がここに表示される -->
             </div>
-
-            <div id="noDataMessage" style="display: none;">
-                <p>予約スケジュールの設定データが見つかりません。<br>
-                管理者から共有されたリンクをご確認ください。</p>
+            <div style="margin-top: 30px; text-align: center;">
+                <button type="button" class="btn-secondary" onclick="copyMeetingsList()">
+                    一覧をコピー
+                </button>
+                <button type="button" class="btn-primary" onclick="createNew()">
+                    新規作成
+                </button>
+                <button type="button" class="btn-danger" onclick="deleteAllMeetings()">
+                    すべて削除
+                </button>
             </div>
+        </div>
 
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <!-- デバッグ用 -->
+        <div style="margin-top: 50px; padding: 20px; background: #f0f0f0; border-radius: 5px;">
+            <h4>デバッグ情報</h4>
+            <p>このセクションは開発中のみ表示されます。</p>
+            <button onclick="document.getElementById('loginSection').style.display='block'">ログイン画面を強制表示</button>
+            <button onclick="document.getElementById('mainSection').style.display='block'">メイン画面を強制表示</button>
         </div>
     </div>
 
     <!-- Google API Client Library -->
-    <script async defer src="https://apis.google.com/js/api.js"></script>
-    <script async defer src="https://accounts.google.com/gsi/client"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" onload="console.log('GIS loaded')"></script>
     
     <script type="module" src="/src/js/main.js"></script>
 </body>
