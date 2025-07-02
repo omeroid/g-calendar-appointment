@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_GOOGLE_API_KEY': JSON.stringify(env.VITE_GOOGLE_API_KEY || '')
     },
     
+    publicDir: 'public',
+    
     build: {
       outDir: 'dist',
       assetsDir: 'assets'
