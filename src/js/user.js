@@ -1,5 +1,6 @@
 import { APP_CONFIG, GOOGLE_CONFIG } from './config.js';
 import { decodeData, getUrlParams, showElement, hideElement, showError, showSuccess, clearMessages } from './utils.js';
+import { initializeGoogleAPI, initializeGoogleIdentity, authenticate, createAppointmentSchedule } from './google-calendar.js';
 
 /**
  * 実行モード（本人用）の処理
@@ -73,48 +74,46 @@ function displayScheduleDetails(scheduleData) {
 export async function createSchedule() {
     clearMessages();
 
+    if (!window.scheduleData) {
+        showError('スケジュールデータが見つかりません');
+        return;
+    }
+
     try {
-        // Google API クライアントを初期化
-        await loadGoogleAPI();
+        // ボタンを無効化
+        const button = document.querySelector('.btn-secondary');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '処理中... <span class="loading"></span>';
+        }
+
+        // Google API を初期化
+        await initializeGoogleAPI();
+        await initializeGoogleIdentity();
         
         // ユーザー認証
-        const authResult = await authenticate();
+        await authenticate();
         
-        if (authResult) {
-            // 予約スケジュールを作成
-            await createAppointmentSchedule();
+        // 予約スケジュールを作成
+        const calendar = await createAppointmentSchedule(window.scheduleData);
+        
+        // 成功メッセージを表示
+        showSuccess(`予約スケジュール「${window.scheduleData.title}」が正常に作成されました！`);
+        
+        // カレンダーへのリンクを表示
+        const successElement = document.getElementById('successMessage');
+        if (successElement && calendar) {
+            successElement.innerHTML += `<br><a href="https://calendar.google.com/calendar/u/0/r/settings/calendar/${calendar.id}" target="_blank" style="color: #1a73e8; text-decoration: underline;">カレンダーを確認する</a>`;
         }
     } catch (error) {
-        showError('予約スケジュールの作成中にエラーが発生しました: ' + error.message);
+        console.error('エラー:', error);
+        showError('予約スケジュールの作成中にエラーが発生しました: ' + (error.message || 'unknown error'));
+    } finally {
+        // ボタンを再度有効化
+        const button = document.querySelector('.btn-secondary');
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = 'Googleアカウントでログインして作成';
+        }
     }
-}
-
-// Google API の読み込み（簡略化版）
-async function loadGoogleAPI() {
-    // 実際の実装では、Google API Client Libraryを読み込みます
-    return new Promise((resolve) => {
-        // ここでgapi.load等を使用
-        console.log('Google API loaded');
-        console.log('Client ID:', GOOGLE_CONFIG.CLIENT_ID);
-        console.log('API Key:', GOOGLE_CONFIG.API_KEY);
-        resolve();
-    });
-}
-
-// 認証処理（簡略化版）
-async function authenticate() {
-    // 実際の実装では、OAuth2認証を行います
-    return new Promise((resolve) => {
-        console.log('Authentication successful');
-        resolve(true);
-    });
-}
-
-// 予約スケジュールの作成（簡略化版）
-async function createAppointmentSchedule() {
-    // 実際の実装では、Google Calendar APIを使用して予約スケジュールを作成します
-    console.log('Creating appointment schedule with data:', window.scheduleData);
-    
-    // 成功メッセージを表示
-    showSuccess('予約スケジュールが正常に作成されました！');
 }
