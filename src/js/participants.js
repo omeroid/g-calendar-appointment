@@ -59,29 +59,61 @@ function searchParticipants(query) {
     
     // 社内ユーザーから検索
     if (window.organizationUsers && window.organizationUsers.length > 0) {
+        console.log('検索対象ユーザー数:', window.organizationUsers.length);
         const internalResults = window.organizationUsers
             .filter(user => {
                 const email = (user.primaryEmail || user.email || '').toLowerCase();
-                const name = (user.name?.fullName || user.name || '').toLowerCase();
-                return email.includes(lowerQuery) || name.includes(lowerQuery);
+                const nameObj = user.name;
+                let fullName = '';
+                
+                // nameオブジェクトの構造に応じて名前を取得
+                if (typeof nameObj === 'object' && nameObj !== null) {
+                    fullName = (nameObj.fullName || nameObj.givenName + ' ' + nameObj.familyName || '').toLowerCase();
+                } else if (typeof nameObj === 'string') {
+                    fullName = nameObj.toLowerCase();
+                } else if (typeof user.name === 'string') {
+                    fullName = user.name.toLowerCase();
+                }
+                
+                return email.includes(lowerQuery) || fullName.includes(lowerQuery);
             })
             .slice(0, 10)
-            .map(user => ({
-                email: user.primaryEmail || user.email,
-                name: user.name?.fullName || user.name || user.primaryEmail || user.email,
-                picture: user.thumbnailPhotoUrl || user.picture,
-                isExternal: false
-            }));
+            .map(user => {
+                const nameObj = user.name;
+                let displayName = '';
+                
+                // 表示名の取得
+                if (typeof nameObj === 'object' && nameObj !== null) {
+                    displayName = nameObj.fullName || nameObj.givenName + ' ' + nameObj.familyName || user.primaryEmail || user.email;
+                } else if (typeof nameObj === 'string') {
+                    displayName = nameObj;
+                } else {
+                    displayName = user.primaryEmail || user.email;
+                }
+                
+                return {
+                    email: user.primaryEmail || user.email,
+                    name: displayName,
+                    picture: user.thumbnailPhotoUrl || user.picture || user.photoUrl,
+                    isExternal: false
+                };
+            });
         
         results.push(...internalResults);
+        console.log('検索結果:', internalResults.length + '件');
     }
     
-    // メールアドレスとして有効な場合は外部ユーザーとして追加オプションを表示
+    // メールアドレスとして有効な場合は追加オプションを表示
     if (isValidEmail(query) && !results.some(r => r.email === query)) {
+        // 現在のユーザーのドメインを取得
+        const currentUserDomain = window.currentUser && window.currentUser.domain ? window.currentUser.domain : '';
+        const queryDomain = query.split('@')[1] || '';
+        const isExternal = queryDomain !== currentUserDomain;
+        
         results.push({
             email: query,
-            name: `外部: ${query}`,
-            isExternal: true
+            name: query,
+            isExternal: isExternal
         });
     }
     
@@ -204,3 +236,6 @@ export function clearParticipants() {
     updateParticipantsDisplay();
     updateParticipantsInput();
 }
+
+// グローバルに公開
+window.clearParticipants = clearParticipants;

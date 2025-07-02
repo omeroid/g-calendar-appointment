@@ -69,7 +69,7 @@ function displayConfirmation(data) {
     const datesText = data.dates.map(dt => {
         const date = new Date(dt.date);
         const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-        return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]}) ${dt.startTime}〜${dt.endTime}`;
+        return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]}) ${dt.startTime}`;
     }).join('<br>');
 
     const confirmHTML = `
@@ -108,6 +108,16 @@ export async function createMeetings() {
         if (!isAuthenticated()) {
             showError('ログインが必要です');
             return;
+        }
+        
+        // 参加者の既存予定をチェック
+        const conflicts = await checkParticipantConflicts(currentScheduleData);
+        if (conflicts.length > 0) {
+            const confirmMessage = formatConflictMessage(conflicts);
+            if (!confirm(confirmMessage)) {
+                buttons.forEach(btn => btn.disabled = false);
+                return;
+            }
         }
         
         // 各日時に対してミーティングを作成
@@ -157,12 +167,12 @@ async function createSingleMeeting(dateTime, scheduleData, batchId) {
     const endDateTime = new Date(startDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + parseInt(scheduleData.duration));
     
-    // 削除URLを生成
-    const deleteUrl = `${window.location.origin}${window.location.pathname}#delete=${batchId}`;
+    // バッチ管理URLを生成
+    const batchUrl = `${window.location.origin}${window.location.pathname}#batch=${batchId}`;
     
     const event = {
         summary: scheduleData.title,
-        description: scheduleData.description + `\n\nBatch ID: ${batchId}\n\n【一括削除URL】\n${deleteUrl}`,
+        description: scheduleData.description + `\n\nBatch ID: ${batchId}\n\n【バッチ管理URL】\n${batchUrl}`,
         start: {
             dateTime: startDateTime.toISOString(),
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -236,9 +246,6 @@ function displayCreatedMeetings() {
                 <h3>${batch.title}</h3>
                 <p>作成日時: ${formatDateTime(batch.createdAt)}</p>
                 <ul>${meetingsHtml}</ul>
-                <button class="btn-danger" onclick="deleteMeetingBatch('${batch.batchId}')">
-                    このバッチを削除
-                </button>
             </div>
         `;
     }).join('');
@@ -264,7 +271,7 @@ export function copyMeetingsList() {
             return `  - ${formatDateTime(start)}`;
         }).join('\n');
         
-        return `【${batch.title}】\n作成日時: ${formatDateTime(batch.createdAt)}\n${meetingsText}`;
+        return `【${batch.title}】\n${meetingsText}`;
     }).join('\n\n');
     
     navigator.clipboard.writeText(text).then(() => {
@@ -279,9 +286,46 @@ export function copyMeetingsList() {
 export function createNew() {
     hideElement('createdSection');
     showElement('mainSection');
+    
+    // フォームをリセット
     document.getElementById('scheduleForm').reset();
-    window.selectedDateTimes = [];
-    document.getElementById('selectedDates').innerHTML = '<p class="no-dates">日付が選択されていません</p>';
+    
+    // 選択された日付をクリア
+    if (window.clearSelectedDateTimes) {
+        window.clearSelectedDateTimes();
+    } else {
+        window.selectedDateTimes = [];
+        document.getElementById('selectedDates').innerHTML = '<p class="no-dates">日付が選択されていません</p>';
+    }
+    
+    // 参加者をクリア
+    const { clearParticipants } = window;
+    if (clearParticipants) {
+        clearParticipants();
+    }
+    
+    // 日付入力に今日の日付を設定
+    const dateInput = document.getElementById('dateInput');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    // 時間を18:00に戻す
+    const startTimeInput = document.getElementById('startTimeInput');
+    if (startTimeInput) {
+        startTimeInput.value = '18:00';
+    }
+    
+    // duration を60分（デフォルト）に戻す
+    const durationButtons = document.querySelectorAll('.duration-btn');
+    durationButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.duration === '60') {
+            btn.classList.add('active');
+        }
+    });
+    document.getElementById('duration').value = '60';
 }
 
 // すべてのミーティングを削除
@@ -333,4 +377,87 @@ export async function deleteMeetingBatch(batchId, updateDisplay = true) {
         console.error('削除エラー:', error);
         throw error;
     }
+}
+
+// 参加者の既存予定をチェック
+async function checkParticipantConflicts(scheduleData) {
+    const conflicts = [];
+    
+    for (const dateTime of scheduleData.dates) {
+        const date = new Date(dateTime.date);
+        const [startHour, startMinute] = dateTime.startTime.split(':').map(Number);
+        
+        const startDateTime = new Date(date);
+        startDateTime.setHours(startHour, startMinute, 0, 0);
+        
+        const endDateTime = new Date(startDateTime);
+        endDateTime.setMinutes(endDateTime.getMinutes() + parseInt(scheduleData.duration));
+        
+        // FreeBusy APIを使用して参加者の予定をチェック
+        try {
+            const response = await gapi.client.request({
+                path: 'https://www.googleapis.com/calendar/v3/freeBusy',
+                method: 'POST',
+                body: {
+                    timeMin: startDateTime.toISOString(),
+                    timeMax: endDateTime.toISOString(),
+                    items: scheduleData.participants.map(p => ({ id: p.email }))
+                }
+            });
+            
+            // 予定が入っている参加者を収集
+            for (const participant of scheduleData.participants) {
+                const calendar = response.result.calendars[participant.email];
+                if (calendar && calendar.busy && calendar.busy.length > 0) {
+                    for (const busyTime of calendar.busy) {
+                        conflicts.push({
+                            participant: participant,
+                            date: dateTime.date,
+                            time: dateTime.startTime,
+                            busyStart: new Date(busyTime.start),
+                            busyEnd: new Date(busyTime.end)
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('FreeBusy APIエラー:', error);
+            // エラーが発生しても続行（チェックをスキップ）
+        }
+    }
+    
+    return conflicts;
+}
+
+// 競合メッセージをフォーマット
+function formatConflictMessage(conflicts) {
+    const conflictsByParticipant = {};
+    
+    conflicts.forEach(conflict => {
+        const key = conflict.participant.email;
+        if (!conflictsByParticipant[key]) {
+            conflictsByParticipant[key] = {
+                name: conflict.participant.name,
+                conflicts: []
+            };
+        }
+        conflictsByParticipant[key].conflicts.push(conflict);
+    });
+    
+    let message = '以下の参加者には既に予定が入っています：\n\n';
+    
+    for (const [email, data] of Object.entries(conflictsByParticipant)) {
+        message += `${data.name} (${email}):\n`;
+        data.conflicts.forEach(c => {
+            const date = new Date(c.date);
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            message += `  - ${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]}) ${c.time}\n`;
+            message += `    既存の予定: ${formatTime(c.busyStart)} - ${formatTime(c.busyEnd)}\n`;
+        });
+        message += '\n';
+    }
+    
+    message += 'それでも登録しますか？';
+    
+    return message;
 }

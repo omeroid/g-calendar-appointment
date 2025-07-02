@@ -93,8 +93,9 @@ function initializeGoogleIdentity() {
                 try {
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: GOOGLE_CONFIG.CLIENT_ID,
-                        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/directory.readonly',
+                        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/contacts.readonly',
                         callback: handleAuthResponse,
+                        hint: currentUser?.email
                     });
                     gisInited = true;
                     console.log('Google Identity Services 初期化完了', tokenClient);
@@ -118,6 +119,35 @@ function initializeGoogleIdentity() {
  * 既存の認証をチェック
  */
 function checkExistingAuth() {
+    // 削除URLまたはバッチ管理URLの場合、localStorageに保存
+    const hash = window.location.hash;
+    if (hash && (hash.startsWith('#delete=') || hash.startsWith('#batch='))) {
+        console.log('特殊URLを検出。ログイン後に処理します:', hash);
+        localStorage.setItem('pendingSpecialHash', hash);
+    }
+    
+    // 保存されたトークンがあるか確認
+    const savedToken = localStorage.getItem('googleAuthToken');
+    if (savedToken) {
+        try {
+            const token = JSON.parse(savedToken);
+            // トークンの有効期限をチェック
+            const expiresAt = token.expires_at || 0;
+            if (expiresAt > Date.now()) {
+                console.log('保存されたトークンを使用');
+                gapi.client.setToken(token);
+                getUserInfo();
+                return;
+            } else {
+                console.log('保存されたトークンは期限切れ');
+                localStorage.removeItem('googleAuthToken');
+            }
+        } catch (error) {
+            console.error('保存されたトークンの読み込みエラー:', error);
+            localStorage.removeItem('googleAuthToken');
+        }
+    }
+    
     const token = gapi.client.getToken();
     if (token) {
         getUserInfo();
@@ -157,6 +187,13 @@ export function login() {
         return;
     }
     
+    // 削除URLまたはバッチ管理URLの場合、ハッシュを保存
+    const currentHash = window.location.hash;
+    if (currentHash && (currentHash.startsWith('#delete=') || currentHash.startsWith('#batch='))) {
+        console.log('特殊URLを保存:', currentHash);
+        localStorage.setItem('pendingSpecialHash', currentHash);
+    }
+    
     tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
@@ -172,8 +209,28 @@ async function handleAuthResponse(resp) {
         return;
     }
     
+    // カレンダー権限が含まれているか確認
+    if (!resp.scope || !resp.scope.includes('https://www.googleapis.com/auth/calendar')) {
+        console.error('カレンダー権限が付与されていません');
+        alert('このツールを使用するには、Googleカレンダーへのアクセス権限が必要です。\nもう一度ログインして、すべての権限を許可してください。');
+        showLoginScreen();
+        return;
+    }
+    
+    // 現在のハッシュを保存（削除URLなどの場合）
+    const currentHash = window.location.hash;
+    console.log('現在のハッシュ:', currentHash);
+    
     // トークンを設定
     gapi.client.setToken(resp);
+    
+    // トークンを保存（有効期限付き）
+    const tokenToSave = {
+        ...resp,
+        expires_at: Date.now() + (resp.expires_in * 1000)
+    };
+    localStorage.setItem('googleAuthToken', JSON.stringify(tokenToSave));
+    console.log('トークンを保存しました');
     
     // People APIのDiscovery Documentを読み込む（認証後）
     try {
@@ -184,6 +241,11 @@ async function handleAuthResponse(resp) {
     }
     
     await getUserInfo();
+    
+    // ハッシュを復元
+    if (currentHash && window.location.hash !== currentHash) {
+        window.location.hash = currentHash;
+    }
 }
 
 /**
@@ -243,13 +305,33 @@ async function getUserInfo() {
             };
         }
         
+        // グローバルに公開
+        window.currentUser = currentUser;
+        
         updateUserDisplay();
         showMainScreen();
         
         // 社内ユーザーリストを取得（Google Workspaceの場合）
         if (currentUser.domain) {
-            loadOrganizationUsers();
+            await loadOrganizationUsers();
         }
+        
+        // 保存された特殊URLがあれば復元
+        const pendingSpecialHash = localStorage.getItem('pendingSpecialHash') || localStorage.getItem('pendingDeleteHash');
+        if (pendingSpecialHash) {
+            console.log('保存された特殊URLを復元:', pendingSpecialHash);
+            window.location.hash = pendingSpecialHash;
+            localStorage.removeItem('pendingSpecialHash');
+            localStorage.removeItem('pendingDeleteHash');
+        }
+        
+        // URLからの削除処理をチェック（認証完了後）
+        const { handleDeleteFromUrl } = await import('./delete-confirm.js');
+        await handleDeleteFromUrl();
+        
+        // URLからのバッチ管理処理をチェック
+        const { handleBatchFromUrl } = await import('./batch-manager.js');
+        await handleBatchFromUrl();
     } catch (error) {
         console.error('ユーザー情報の取得に失敗:', error);
         console.error('エラー詳細:', {
@@ -285,8 +367,17 @@ export function logout() {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
     }
+    // 保存されたトークンも削除
+    localStorage.removeItem('googleAuthToken');
     currentUser = null;
+    window.currentUser = null;
     window.organizationUsers = [];
+    
+    // すべてのセクションを非表示にしてログイン画面のみを表示
+    hideElement('mainSection');
+    hideElement('confirmSection');
+    hideElement('createdSection');
+    hideElement('batchListSection');
     showLoginScreen();
 }
 
@@ -294,41 +385,93 @@ export function logout() {
  * 社内ユーザーリストを取得
  */
 async function loadOrganizationUsers() {
+    console.log('社内ユーザーリストの読み込み開始');
+    window.organizationUsers = [];
+    
     try {
-        // Google Directory APIを使用（要Admin SDK権限）
-        const response = await gapi.client.request({
-            path: 'https://www.googleapis.com/admin/directory/v1/users',
-            params: {
-                domain: currentUser.domain,
-                maxResults: 500,
-                orderBy: 'email'
-            }
+        // People APIが読み込まれていることを確認
+        if (!gapi.client.people) {
+            console.log('People APIを再読み込み中...');
+            await gapi.client.load('people', 'v1');
+        }
+        
+        // People API経由で連絡先を取得
+        console.log('People APIで連絡先を取得中...');
+        const response = await gapi.client.people.people.connections.list({
+            resourceName: 'people/me',
+            pageSize: 1000,
+            personFields: 'names,emailAddresses,photos,organizations'
         });
         
-        window.organizationUsers = response.result.users || [];
-    } catch (error) {
-        console.log('社内ユーザーリストの取得に失敗（権限不足の可能性）:', error);
-        // People APIで代替試行
-        try {
-            const response = await gapi.client.people.people.connections.list({
-                resourceName: 'people/me',
-                pageSize: 1000,
-                personFields: 'names,emailAddresses,photos'
-            });
-            
-            window.organizationUsers = (response.result.connections || [])
-                .filter(person => person.emailAddresses && person.emailAddresses.length > 0)
+        console.log('People API応答:', response);
+        
+        if (response.result.connections && response.result.connections.length > 0) {
+            // ドメインでフィルタリング（同じ組織のユーザーのみ）
+            const domainUsers = response.result.connections
+                .filter(person => {
+                    if (!person.emailAddresses || person.emailAddresses.length === 0) return false;
+                    const email = person.emailAddresses[0].value;
+                    return email.endsWith('@' + currentUser.domain);
+                })
                 .map(person => ({
                     primaryEmail: person.emailAddresses[0].value,
+                    email: person.emailAddresses[0].value,
                     name: {
                         fullName: person.names ? person.names[0].displayName : person.emailAddresses[0].value
                     },
                     thumbnailPhotoUrl: person.photos ? person.photos[0].url : null
                 }));
-        } catch (error2) {
-            console.log('連絡先の取得にも失敗:', error2);
-            window.organizationUsers = [];
+            
+            window.organizationUsers = domainUsers;
+            console.log(`${domainUsers.length}人の社内ユーザーを取得しました`);
+        } else {
+            console.log('連絡先が見つかりませんでした');
         }
+        
+        // Directory APIも試行（管理者権限が必要なため、多くの場合は失敗します）
+        if (currentUser.domain && currentUser.domain !== 'gmail.com') {
+            try {
+                // console.log('Directory APIも試行中...'); // 詳細ログは抑制
+                const dirResponse = await gapi.client.request({
+                    path: 'https://www.googleapis.com/admin/directory/v1/users',
+                    params: {
+                        domain: currentUser.domain,
+                        maxResults: 500,
+                        orderBy: 'email'
+                    }
+                });
+                
+                if (dirResponse.result.users && dirResponse.result.users.length > 0) {
+                    console.log(`Directory APIで${dirResponse.result.users.length}人のユーザーを取得`);
+                    window.organizationUsers = dirResponse.result.users;
+                }
+            } catch (dirError) {
+                // 403エラーは予期されるため、情報レベルのログのみ
+                if (dirError.status === 403) {
+                    console.info('Directory API: 管理者権限が必要です（手動で参加者を入力してください）');
+                } else {
+                    console.log('Directory APIエラー:', dirError.status);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('ユーザーリストの取得エラー:', error);
+        console.error('エラー詳細:', {
+            message: error.message,
+            status: error.status,
+            statusText: error.statusText
+        });
+        
+        // ユーザーに通知
+        console.info('連絡先の自動読み込みができませんでした。参加者は手動で入力してください。');
+    }
+    
+    console.log('最終的なorganizationUsers:', window.organizationUsers);
+    
+    // 組織ユーザーが取得できなかった場合でも、手動入力は可能
+    if (window.organizationUsers.length === 0) {
+        console.info('参加者は手動でメールアドレスを入力してください。');
     }
 }
 
@@ -338,6 +481,9 @@ async function loadOrganizationUsers() {
 export function getCurrentUser() {
     return currentUser;
 }
+
+// グローバルスコープに現在のユーザー情報を公開（参加者機能で使用）
+window.currentUser = currentUser;
 
 /**
  * 認証済みかチェック

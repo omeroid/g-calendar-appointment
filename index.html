@@ -26,6 +26,20 @@
         </div>
 
 
+        <!-- バッチ一覧セクション -->
+        <div id="batchListSection" class="section" style="display: none;">
+            <h2>作成済みのバッチ一覧</h2>
+            <p>選択したバッチから1つの予定を残し、他を削除できます。</p>
+            <div id="batchList" class="batch-list">
+                <!-- バッチ一覧がここに表示される -->
+            </div>
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn-primary" onclick="goToMainSection()">
+                    新規作成画面へ
+                </button>
+            </div>
+        </div>
+
         <!-- メインセクション -->
         <div id="mainSection" class="section" style="display: none;">
             <h2>ミーティング予約枠設定</h2>
@@ -69,8 +83,9 @@
                     <label>参加者 *</label>
                     <div class="participants-container">
                         <div class="participants-search">
-                            <input type="text" id="participantSearch" placeholder="名前またはメールアドレスで検索" autocomplete="off">
+                            <input type="text" id="participantSearch" placeholder="メールアドレスを入力（直接入力も可能）" autocomplete="off">
                             <div id="searchResults" class="search-results" style="display: none;"></div>
+                            <small style="color: #666; font-size: 12px;">メールアドレスを直接入力してEnterキーを押すと追加できます</small>
                         </div>
                         <div class="selected-participants" id="selectedParticipants">
                             <p class="no-participants">参加者が選択されていません</p>
@@ -80,13 +95,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label>利用可能な日付と時間帯 *</label>
+                    <label>利用可能な日付と時間 *</label>
                     <div class="date-time-selector">
                         <div class="date-input-container">
                             <input type="date" id="dateInput" class="date-input">
-                            <input type="time" id="startTimeInput" value="09:00">
-                            <span>〜</span>
-                            <input type="time" id="endTimeInput" value="17:00">
+                            <input type="time" id="startTimeInput" value="18:00">
                             <button type="button" class="btn-add-date" onclick="addDateTime()">
                                 日程を追加
                             </button>
@@ -132,10 +145,7 @@
                     一覧をコピー
                 </button>
                 <button type="button" class="btn-primary" onclick="createNew()">
-                    新規作成
-                </button>
-                <button type="button" class="btn-danger" onclick="deleteAllMeetings()">
-                    すべて削除
+                    他の予定も作成する
                 </button>
             </div>
         </div>

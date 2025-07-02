@@ -59,15 +59,28 @@ export function showDeleteConfirmation(batch) {
  * URLからの削除処理
  */
 export async function handleDeleteFromUrl() {
+    console.log('handleDeleteFromUrl called with hash:', window.location.hash);
+    
     const hash = window.location.hash;
-    if (!hash.startsWith('#delete=')) return;
+    if (!hash.startsWith('#delete=')) {
+        console.log('No delete hash found');
+        return;
+    }
     
     const batchId = hash.substring(8);
-    if (!batchId) return;
+    if (!batchId) {
+        console.log('No batchId found');
+        return;
+    }
+    
+    console.log('Processing delete for batchId:', batchId);
+    
+    console.log('削除URLの処理開始:', batchId);
     
     // ログイン確認
     const { isAuthenticated } = await import('./auth.js');
     if (!isAuthenticated()) {
+        console.log('認証されていないため削除処理を中断');
         alert('削除するにはログインが必要です');
         return;
     }

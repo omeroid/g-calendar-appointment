@@ -13,6 +13,7 @@ import {
 import { initAuth, login, logout } from './auth.js';
 import { initParticipantSearch } from './participants.js';
 import { handleDeleteFromUrl } from './delete-confirm.js';
+import { handleBatchFromUrl } from './batch-manager.js';
 
 /**
  * メインアプリケーション
@@ -54,7 +55,4 @@ export async function init() {
     if (document.getElementById('selectedDates')) {
         document.getElementById('selectedDates').innerHTML = '<p class="no-dates">日付が選択されていません</p>';
     }
-    
-    // URLからの削除処理をチェック
-    handleDeleteFromUrl();
 }

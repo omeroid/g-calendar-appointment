@@ -24,31 +24,48 @@ export function initLocationSelector() {
 export function addDateTime() {
     const dateInput = document.getElementById('dateInput');
     const startTimeInput = document.getElementById('startTimeInput');
-    const endTimeInput = document.getElementById('endTimeInput');
+    const duration = parseInt(document.getElementById('duration').value) || 60; // デフォルト60分
     
     if (!dateInput.value) {
         alert('日付を選択してください');
         return;
     }
     
+    // 終了時間を自動計算
+    const [startHour, startMinute] = startTimeInput.value.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = startMinutes + duration;
+    const endHour = Math.floor(endMinutes / 60);
+    const endMinute = endMinutes % 60;
+    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+    
     const dateTime = {
         id: Date.now(),
         date: dateInput.value,
         startTime: startTimeInput.value,
-        endTime: endTimeInput.value
+        endTime: endTime
     };
     
-    // 同じ日付が既に存在するかチェック
-    const existingIndex = selectedDateTimes.findIndex(dt => dt.date === dateTime.date);
-    if (existingIndex !== -1) {
-        if (confirm(`${formatDate(dateTime.date)}は既に登録されています。上書きしますか？`)) {
-            selectedDateTimes[existingIndex] = dateTime;
-        } else {
+    // 同じ日付と時間が重複するかチェック
+    const hasConflict = selectedDateTimes.some(dt => {
+        if (dt.date !== dateTime.date) return false;
+        
+        // 時間の重複をチェック
+        const existingStart = timeToMinutes(dt.startTime);
+        const existingEnd = timeToMinutes(dt.endTime);
+        const newStart = timeToMinutes(dateTime.startTime);
+        const newEnd = timeToMinutes(dateTime.endTime);
+        
+        return (newStart < existingEnd && newEnd > existingStart);
+    });
+    
+    if (hasConflict) {
+        if (!confirm(`${formatDate(dateTime.date)} ${dateTime.startTime}は既に予定が入っています。それでも追加しますか？`)) {
             return;
         }
-    } else {
-        selectedDateTimes.push(dateTime);
     }
+    
+    selectedDateTimes.push(dateTime);
     
     // 日付でソート
     selectedDateTimes.sort((a, b) => a.date.localeCompare(b.date));
@@ -56,10 +73,10 @@ export function addDateTime() {
     // 表示を更新
     updateSelectedDatesDisplay();
     
-    // 次の日付を自動設定
-    const nextDate = new Date(dateInput.value);
-    nextDate.setDate(nextDate.getDate() + 1);
-    dateInput.value = nextDate.toISOString().split('T')[0];
+    // 日付入力は変更せず、保持する（ユーザーの要望により）
+    // const nextDate = new Date(dateInput.value);
+    // nextDate.setDate(nextDate.getDate() + 1);
+    // dateInput.value = nextDate.toISOString().split('T')[0];
 }
 
 // 選択された日付の表示を更新
@@ -73,7 +90,7 @@ function updateSelectedDatesDisplay() {
     
     container.innerHTML = selectedDateTimes.map(dt => `
         <div class="selected-date-item">
-            <span class="date-text">${formatDate(dt.date)} ${dt.startTime}〜${dt.endTime}</span>
+            <span class="date-text">${formatDate(dt.date)} ${dt.startTime}</span>
             <button type="button" class="btn-remove-date" onclick="removeDateTime(${dt.id})">
                 削除
             </button>
@@ -94,8 +111,22 @@ function formatDate(dateStr) {
     return `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]})`;
 }
 
+// 時間を分に変換
+function timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
 // グローバルに公開
 window.selectedDateTimes = selectedDateTimes;
+
+// 選択された日付をクリアする関数
+export function clearSelectedDateTimes() {
+    selectedDateTimes.length = 0;
+    updateSelectedDatesDisplay();
+}
+
+window.clearSelectedDateTimes = clearSelectedDateTimes;
 
 // リンク生成
 export function generateLink() {
