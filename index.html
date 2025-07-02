@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約スケジュール代理作成ツール</title>
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>予約スケジュール代理作成ツール</h1>
+            <p>Google Calendar の予約スケジュールを代理で設定できます</p>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('admin')">管理者モード（代理人用）</button>
+            <button class="mode-btn" onclick="switchMode('user')">実行モード（本人用）</button>
+        </div>
+
+        <!-- 管理者モード（代理人用） -->
+        <div id="adminMode" class="section active">
+            <h2>予約スケジュール設定</h2>
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label for="title">予約スケジュールのタイトル *</label>
+                    <input type="text" id="title" name="title" required placeholder="例: 個別相談会">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">説明</label>
+                    <textarea id="description" name="description" placeholder="予約スケジュールの説明を入力してください"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="duration">予約時間の長さ（分） *</label>
+                    <select id="duration" name="duration" required>
+                        <option value="15">15分</option>
+                        <option value="30" selected>30分</option>
+                        <option value="45">45分</option>
+                        <option value="60">60分</option>
+                        <option value="90">90分</option>
+                        <option value="120">120分</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">場所</label>
+                    <select id="location" name="location">
+                        <option value="meet">Google Meet（自動生成）</option>
+                        <option value="phone">電話</option>
+                        <option value="physical">対面</option>
+                        <option value="custom">カスタム</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="customLocationGroup" style="display: none;">
+                    <label for="customLocation">カスタム場所</label>
+                    <input type="text" id="customLocation" name="customLocation" placeholder="場所の詳細を入力">
+                </div>
+
+                <div class="form-group">
+                    <label for="bufferTime">バッファタイム（分）</label>
+                    <select id="bufferTime" name="bufferTime">
+                        <option value="0">なし</option>
+                        <option value="15">15分</option>
+                        <option value="30">30分</option>
+                        <option value="45">45分</option>
+                        <option value="60">60分</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>利用可能な曜日と時間帯 *</label>
+                    <div class="time-slots">
+                        <div class="time-slot">
+                            <label>
+                                <input type="checkbox" name="days" value="1" checked> 月曜日
+                            </label>
+                            <input type="time" name="startTime1" value="09:00">
+                            <span>〜</span>
+                            <input type="time" name="endTime1" value="17:00">
+                        </div>
+                        <div class="time-slot">
+                            <label>
+                                <input type="checkbox" name="days" value="2" checked> 火曜日
+                            </label>
+                            <input type="time" name="startTime2" value="09:00">
+                            <span>〜</span>
+                            <input type="time" name="endTime2" value="17:00">
+                        </div>
+                        <div class="time-slot">
+                            <label>
+                                <input type="checkbox" name="days" value="3" checked> 水曜日
+                            </label>
+                            <input type="time" name="startTime3" value="09:00">
+                            <span>〜</span>
+                            <input type="time" name="endTime3" value="17:00">
+                        </div>
+                        <div class="time-slot">
+                            <label>
+                                <input type="checkbox" name="days" value="4" checked> 木曜日
+                            </label>
+                            <input type="time" name="startTime4" value="09:00">
+                            <span>〜</span>
+                            <input type="time" name="endTime4" value="17:00">
+                        </div>
+                        <div class="time-slot">
+                            <label>
+                                <input type="checkbox" name="days" value="5" checked> 金曜日
+                            </label>
+                            <input type="time" name="startTime5" value="09:00">
+                            <span>〜</span>
+                            <input type="time" name="endTime5" value="17:00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxBookingTime">予約可能期間（日後まで）</label>
+                    <select id="maxBookingTime" name="maxBookingTime">
+                        <option value="7">1週間</option>
+                        <option value="14">2週間</option>
+                        <option value="30" selected>30日</option>
+                        <option value="60">60日</option>
+                        <option value="90">90日</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn-primary" onclick="generateLink()">
+                    共有リンクを生成
+                </button>
+            </form>
+
+            <div id="linkSection" style="display: none;">
+                <div class="generated-link">
+                    <strong>生成されたリンク:</strong>
+                    <div id="generatedLink"></div>
+                    <button class="copy-btn" onclick="copyLink()">リンクをコピー</button>
+                </div>
+
+                <div class="preview-section">
+                    <h3>設定内容のプレビュー</h3>
+                    <div id="previewContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 実行モード（本人用） -->
+        <div id="userMode" class="section">
+            <h2>予約スケジュール作成確認</h2>
+            
+            <div id="scheduleDetails" style="display: none;">
+                <div class="preview-section">
+                    <h3>作成する予約スケジュールの内容</h3>
+                    <div id="scheduleContent"></div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <p style="margin-bottom: 20px;">
+                        <strong>注意:</strong> 以下のボタンをクリックすると、Googleアカウントでログインし、
+                        上記の内容で予約スケジュールが作成されます。
+                    </p>
+                    <button class="btn-secondary" onclick="createSchedule()">
+                        Googleアカウントでログインして作成
+                    </button>
+                </div>
+            </div>
+
+            <div id="noDataMessage" style="display: none;">
+                <p>予約スケジュールの設定データが見つかりません。<br>
+                管理者から共有されたリンクをご確認ください。</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
