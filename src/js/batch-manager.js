@@ -152,11 +152,15 @@ function showMeetingSelectionModal(events, batchId) {
         `;
     }).join('');
     
+    // タイムスタンプを追加してユニークにする
+    const modalId = `modal-${Date.now()}`;
+    modal.setAttribute('data-modal-id', modalId);
+    
     modal.innerHTML = `
         <div class="meeting-selection-content">
             <h3>残す予定を選択してください</h3>
             <p>選択されなかった予定は削除されます。</p>
-            <div class="meeting-options">
+            <div class="meeting-options" id="${modalId}-options">
                 ${eventOptions}
             </div>
             <div class="modal-buttons">
@@ -177,6 +181,8 @@ function showMeetingSelectionModal(events, batchId) {
 export function closeMeetingSelectionModal() {
     const modal = document.querySelector('.meeting-selection-modal');
     if (modal) {
+        // 選択状態もクリア
+        window.currentModalEvents = null;
         modal.remove();
     }
 }
@@ -233,7 +239,7 @@ function formatDate(date) {
     return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-// イベントからバッチ管理URLを削除
+// イベントからバッチ管理URLを削除し、タイトルを更新
 async function removeBatchUrlFromEvent(event) {
     try {
         // 説明からバッチ関連の情報を削除
@@ -246,21 +252,21 @@ async function removeBatchUrlFromEvent(event) {
             .join('\n')
             .trim();
         
-        // イベントを更新
-        const updatedEvent = {
-            ...event,
-            description: newDescription
-        };
+        // タイトルを【候補】から【確定】に変更
+        let newTitle = event.summary || '';
+        newTitle = newTitle.replace('【候補】', '【確定】');
         
+        // イベントを更新
         await gapi.client.calendar.events.patch({
             calendarId: 'primary',
             eventId: event.id,
             resource: {
+                summary: newTitle,
                 description: newDescription
             }
         });
         
-        console.log('バッチ管理URLを削除しました');
+        console.log('バッチ管理URLを削除し、タイトルを更新しました');
     } catch (error) {
         console.error('バッチURL削除エラー:', error);
     }

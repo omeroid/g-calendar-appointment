@@ -171,7 +171,7 @@ async function createSingleMeeting(dateTime, scheduleData, batchId) {
     const batchUrl = `${window.location.origin}${window.location.pathname}#batch=${batchId}`;
     
     const event = {
-        summary: scheduleData.title,
+        summary: '【候補】' + scheduleData.title,
         description: scheduleData.description + `\n\nBatch ID: ${batchId}\n\n【バッチ管理URL】\n${batchUrl}`,
         start: {
             dateTime: startDateTime.toISOString(),
