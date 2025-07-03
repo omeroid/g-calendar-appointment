@@ -1,16 +1,12 @@
 // Google API設定
 export const GOOGLE_CONFIG = {
     CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-    API_KEY: import.meta.env.VITE_GOOGLE_API_KEY || '',
     SCOPES: 'https://www.googleapis.com/auth/calendar'
 };
 
 // デバッグ情報
 if (!GOOGLE_CONFIG.CLIENT_ID) {
     console.error('VITE_GOOGLE_CLIENT_ID が設定されていません。.envファイルを確認してください。');
-}
-if (!GOOGLE_CONFIG.API_KEY) {
-    console.error('VITE_GOOGLE_API_KEY が設定されていません。.envファイルを確認してください。');
 }
 
 // アプリケーション設定

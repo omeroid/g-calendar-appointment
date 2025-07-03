@@ -2,18 +2,16 @@
 
 ## Before Going Public
 
-### ✅ API Keys and Secrets
-- [ ] Remove all API keys from code
-- [ ] Create new API credentials for production
+### ✅ OAuth Credentials
+- [ ] Remove all client IDs from code
+- [ ] Create new OAuth credentials for production
 - [ ] Set up environment variables in deployment platform
-- [ ] Add HTTP referrer restrictions in Google Cloud Console
-- [ ] Limit API key to necessary APIs only
+- [ ] Add only production domains to authorized origins in Google Cloud Console
 
 ### ✅ Google Cloud Console Setup
 - [ ] Enable only required APIs:
   - [ ] Google Calendar API
   - [ ] Google People API
-  - [ ] Google Identity Toolkit API
 - [ ] Configure OAuth consent screen
 - [ ] Add only production domains to authorized origins
 - [ ] Set appropriate scopes (minimal required)
@@ -52,7 +50,7 @@
 ### ✅ Maintenance
 - [ ] Schedule regular dependency updates
 - [ ] Run `yarn audit` before each deployment
-- [ ] Review and rotate API keys periodically
+- [ ] Review and rotate OAuth credentials periodically
 - [ ] Update security documentation as needed
 
 ## Emergency Response

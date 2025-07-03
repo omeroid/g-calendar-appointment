@@ -56,7 +56,6 @@ Google Calendar に複数のミーティング予約枠を一括で作成でき�
    APIs & Services > Library で以下のAPIを検索して有効化：
    - Google Calendar API
    - Google People API
-   - Google Identity Toolkit API（OAuth認証用）
    ```
 
 4. OAuth 2.0 クライアント ID を作成：
@@ -70,13 +69,6 @@ Google Calendar に複数のミーティング予約枠を一括で作成でき�
    - Authorized redirect URIs: 設定不要（暗黙的フロー使用）
    ```
 
-5. API キーを作成：
-   ```
-   APIs & Services > Credentials > Create Credentials > API key
-   - 必要に応じてキーの制限を設定
-   - HTTPリファラー制限を推奨
-   - 使用するAPIの制限も設定可能
-   ```
 
 ### ローカル開発環境の構築
 
@@ -94,7 +86,6 @@ Google Calendar に複数のミーティング予約枠を一括で作成でき�
    `.env` ファイルを編集して、Google Cloud Console で取得した認証情報を設定：
    ```
    VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   VITE_GOOGLE_API_KEY=your-api-key
    ```
 
 3. 依存関係をインストール：
@@ -129,7 +120,6 @@ yarn preview
 
 1. GitHub リポジトリの Settings > Secrets and variables > Actions で以下を設定：
    - `VITE_GOOGLE_CLIENT_ID`: Google OAuth クライアント ID
-   - `VITE_GOOGLE_API_KEY`: Google API キー
 
 2. Settings > Pages で：
    - Source: Deploy from a branch → GitHub Actions に変更
@@ -189,19 +179,13 @@ GitHub Actions の workflow_dispatch を使用して手動でデプロイする�
    - Google Cloud Console で正しいドメインを承認済みオリジンに追加
    - 環境変数が正しく設定されているか確認
 
-2. **「API キーが無効です」エラー**
-   - API キーの制限設定を確認
-   - Google Calendar API が有効化されているか確認
-
-3. **「403 Forbidden」エラー**
+2. **「403 Forbidden」エラー**
    - 必要なAPIがすべて有効化されているか確認：
      - Google Calendar API
      - Google People API
-     - Google Identity Toolkit API
-   - APIキーの制限が厳しすぎないか確認
    - OAuth同意画面が設定されているか確認
 
-4. **ビルドエラー**
+3. **ビルドエラー**
    - Node.js のバージョンを確認（20以上）
    - `node_modules` と `.yarn` を削除して `yarn install` を再実行
 

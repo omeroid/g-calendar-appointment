@@ -19,12 +19,12 @@ If you discover a security vulnerability within this project, please follow thes
 
 When deploying this application:
 
-### 1. API Key Protection
-- Never commit API keys or client IDs to the repository
+### 1. OAuth Protection
+- Never commit client IDs to the repository
 - Use environment variables for all sensitive data
-- Restrict API keys in Google Cloud Console:
-  - Set HTTP referrer restrictions
-  - Limit to necessary APIs only (Calendar API, People API)
+- Configure OAuth in Google Cloud Console:
+  - Only add production domains to authorized origins
+  - Use minimal required scopes
 
 ### 2. OAuth Configuration
 - Only add production domains to authorized origins
@@ -47,6 +47,7 @@ When deploying this application:
 1. **Token Storage**: Access tokens are stored in localStorage. Consider the XSS risk.
 2. **Client-Side Processing**: All calendar operations happen client-side
 3. **Template Storage**: Meeting templates are stored in browser localStorage
+4. **No API Keys**: This application uses OAuth 2.0 authentication only, no API keys are required
 
 ## Recommended Headers
 

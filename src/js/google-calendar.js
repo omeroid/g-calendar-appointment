@@ -20,7 +20,6 @@ export async function initializeGoogleAPI() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({
-                            apiKey: GOOGLE_CONFIG.API_KEY,
                             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                         });
                         gapiInited = true;
