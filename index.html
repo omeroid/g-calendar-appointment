@@ -47,12 +47,22 @@
             <form id="scheduleForm">
                 <div class="form-group">
                     <label for="title">ミーティングのタイトル *</label>
-                    <input type="text" id="title" name="title" required placeholder="例: 1on1ミーティング">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="title" name="title" required placeholder="例: 1on1ミーティング" style="flex: 1;">
+                        <button type="button" class="btn-template" onclick="showTemplates()" title="保存したテンプレートから選択">
+                            テンプレートから選択
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="description">説明</label>
-                    <textarea id="description" name="description" placeholder="ミーティングの説明を入力してください"></textarea>
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <textarea id="description" name="description" placeholder="ミーティングの説明を入力してください" style="flex: 1;"></textarea>
+                        <button type="button" class="btn-template" onclick="saveAsTemplate()" title="現在の入力内容をテンプレートとして保存">
+                            テンプレートに保存
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -153,6 +163,21 @@
 
         <div class="error-message" id="errorMessage"></div>
         <div class="success-message" id="successMessage"></div>
+    </div>
+
+    <!-- テンプレート選択モーダル -->
+    <div id="templateModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>テンプレートを選択</h3>
+                <button type="button" class="modal-close" onclick="closeTemplateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="templateList" class="template-list">
+                    <!-- テンプレート一覧がここに表示される -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Google API Client Library -->

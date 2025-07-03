@@ -14,6 +14,7 @@ import { initAuth, login, logout } from './auth.js';
 import { initParticipantSearch } from './participants.js';
 import { handleDeleteFromUrl } from './delete-confirm.js';
 import { handleBatchFromUrl } from './batch-manager.js';
+import './templates.js';
 
 /**
  * メインアプリケーション

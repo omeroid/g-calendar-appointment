@@ -257,6 +257,32 @@ body {
     box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
 }
 
+/* Template Buttons */
+.btn-template {
+    background: #f8f9fa;
+    color: #5f6368;
+    padding: 8px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-template:hover {
+    background: #e8eaed;
+    border-color: #5f6368;
+}
+
+.btn-template:before {
+    content: "📋";
+    font-size: 14px;
+}
+
 .copy-btn {
     background: #4285f4;
     color: white;
@@ -741,4 +767,122 @@ small {
 
 .modal-buttons button {
     padding: 10px 20px;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Template List */
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.template-item {
+    border: 1px solid #e8e8e8;
+    border-radius: 5px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.template-item:hover {
+    border-color: #4CAF50;
+    background-color: #f9f9f9;
+}
+
+.template-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.template-title {
+    font-weight: bold;
+    color: #333;
+}
+
+.template-description {
+    color: #666;
+    font-size: 14px;
+    white-space: pre-wrap;
+}
+
+.template-delete {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.template-delete:hover {
+    color: #cc0000;
+}
+
+.no-templates {
+    text-align: center;
+    color: #999;
+    padding: 40px 20px;
 }
