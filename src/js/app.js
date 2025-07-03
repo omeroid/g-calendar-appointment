@@ -15,6 +15,7 @@ import { initParticipantSearch } from './participants.js';
 import { handleDeleteFromUrl } from './delete-confirm.js';
 import { handleBatchFromUrl } from './batch-manager.js';
 import './templates.js';
+import { initHelpModal } from './help.js';
 
 /**
  * メインアプリケーション
@@ -56,4 +57,7 @@ export async function init() {
     if (document.getElementById('selectedDates')) {
         document.getElementById('selectedDates').innerHTML = '<p class="no-dates">日付が選択されていません</p>';
     }
+    
+    // ヘルプモーダルの初期化
+    initHelpModal();
 }

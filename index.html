@@ -15,6 +15,9 @@
         <div class="header">
             <h1>ミーティング予約枠作成ツール</h1>
             <p>Google Calendar にミーティングの予約枠を簡単に作成できます</p>
+            <button type="button" class="help-button" onclick="showHelp()" title="ヘルプ">
+                <span class="help-icon">?</span>
+            </button>
             <div id="userInfo" class="user-info"></div>
         </div>
 
@@ -179,6 +182,101 @@
                 <div id="templateList" class="template-list">
                     <!-- テンプレート一覧がここに表示される -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ヘルプダイアログ -->
+    <div id="helpModal" class="modal" style="display: none;">
+        <div class="modal-content help-modal-content">
+            <div class="modal-header">
+                <h3>ヘルプ - ミーティング予約枠作成ツールの使い方</h3>
+                <button type="button" class="modal-close" onclick="closeHelp()">&times;</button>
+            </div>
+            <div class="modal-body help-content">
+                <section class="help-section">
+                    <h4>🎯 このツールでできること</h4>
+                    <ul>
+                        <li>Google Calendarに複数のミーティング予約枠を一括作成</li>
+                        <li>参加者を事前に指定して予定を設定</li>
+                        <li>作成した予約枠の中から1つを選んで他を削除</li>
+                        <li>よく使う設定をテンプレートとして保存</li>
+                    </ul>
+                </section>
+
+                <section class="help-section">
+                    <h4>📝 基本的な使い方</h4>
+                    <ol>
+                        <li>
+                            <strong>ミーティング情報の入力</strong>
+                            <p>タイトルと説明を入力します。テンプレート機能を使うと、よく使う設定を簡単に呼び出せます。</p>
+                        </li>
+                        <li>
+                            <strong>予約時間の選択</strong>
+                            <p>30分、1時間、2時間から選択できます。</p>
+                        </li>
+                        <li>
+                            <strong>参加者の指定</strong>
+                            <p>メールアドレスを入力してEnterキーを押すか、検索結果から選択します。</p>
+                        </li>
+                        <li>
+                            <strong>日時の選択</strong>
+                            <p>日付と時刻を選んで「日程を追加」をクリック。複数の日時を追加できます。</p>
+                        </li>
+                        <li>
+                            <strong>予約枠の作成</strong>
+                            <p>「確認画面へ」→「予約枠を作成」でGoogle Calendarに予定が作成されます。</p>
+                        </li>
+                    </ol>
+                </section>
+
+                <section class="help-section">
+                    <h4>✨ 便利な機能</h4>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <strong>📋 テンプレート機能</strong>
+                            <p>よく使うミーティング設定を保存して、次回から簡単に再利用できます。</p>
+                        </div>
+                        <div class="feature-item">
+                            <strong>📅 バッチ管理</strong>
+                            <p>同じミーティングの複数予約枠から1つを選んで、他を一括削除できます。</p>
+                        </div>
+                        <div class="feature-item">
+                            <strong>🔗 Google Meet連携</strong>
+                            <p>「Google Meet」を選択すると、会議リンクが自動生成されます。</p>
+                        </div>
+                        <div class="feature-item">
+                            <strong>📧 参加者通知</strong>
+                            <p>予約枠作成時に参加者へ招待メールが自動送信されます。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h4>⚠️ 注意事項</h4>
+                    <ul>
+                        <li>初回利用時はGoogleアカウントでの認証が必要です</li>
+                        <li>作成される予定のタイトルには「【候補】」が付きます</li>
+                        <li>テンプレートはブラウザのローカルストレージに保存されます</li>
+                        <li>予約枠の削除はGoogle Calendarからも直接行えます</li>
+                    </ul>
+                </section>
+
+                <section class="help-section">
+                    <h4>🔧 トラブルシューティング</h4>
+                    <details>
+                        <summary>「ログインが必要です」と表示される</summary>
+                        <p>「Googleでログイン」ボタンをクリックして、Googleアカウントで認証してください。</p>
+                    </details>
+                    <details>
+                        <summary>参加者が検索できない</summary>
+                        <p>メールアドレスを直接入力してEnterキーを押すことで、外部の参加者も追加できます。</p>
+                    </details>
+                    <details>
+                        <summary>エラーが発生する</summary>
+                        <p>Google Calendar APIの設定を確認してください。詳細は<a href="https://github.com/omeroid/g-calendar-appointment" target="_blank">リポジトリ</a>を参照してください。</p>
+                    </details>
+                </section>
             </div>
         </div>
     </div>
