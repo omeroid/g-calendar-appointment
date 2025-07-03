@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   
   return {
     // GitHub Pagesでのデプロイに対応
-    base: process.env.GITHUB_PAGES ? '/g-calendar-proxy-reservation/' : '/',
+    base: process.env.GITHUB_PAGES ? '/g-calendar-appointment/' : '/',
     
     // 環境変数をクライアントに公開
     define: {
